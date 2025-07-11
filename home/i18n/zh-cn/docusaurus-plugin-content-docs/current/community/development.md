@@ -70,3 +70,30 @@ HertzBeat 包将生成为 `dist/hertzbeat-{version}.tar.gz`
 4. 在 `hertzbeat-collector` 目录下执行: `mvn clean package -Pcluster`
 
 HertzBeat 采样器包将生成为 `dist/hertzbeat-collector-{version}.tar.gz`
+
+## 后端CI
+
+### Maven Surefire 插件测试失败排查指南
+1. 在构建配置中添加测试报告上传步骤（适用于GitHub Actions）
+   ```yaml
+      # .github/workflows/backend-build-test.yml
+      # 其他构建步骤...
+      - name: Build with Maven
+        run: mvnd clean -B package -Prelease -Dmaven.test.skip=false --file pom.xml
+
+      # 测试报告上传步骤
+      - name: Upload test reports
+        if: failure()  # 仅在测试失败时执行
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports-${{ github.run_id }}  # 动态生成唯一报告名称
+          path: |
+            **/target/surefire-reports  # 递归收集所有单元测试报告
+            **/target/failsafe-reports  # 递归收集所有集成测试报告
+2. 获取测试报告文件步骤
+    1. 测试失败后，在GitHub Actions页面找到对应的运行记录
+    2. 在"Artifacts"部分找到生成的测试报告文件
+    3. 点击下载按钮获取报告压缩包
+    4. 解压后查看具体的测试失败详情
+  ![测试报告下载示例](https://github.com/user-attachments/assets/bac50f93-5e13-4295-84ed-444a9146ee28)
+
